@@ -15,6 +15,10 @@ import com.weirdresonance.android.habitual.HabitualActivity.HabitualContract;
 import com.weirdresonance.android.habitual.HabitualActivity.HabitualContract.GuitarPractice;
 
 import java.security.PublicKey;
+import java.text.BreakIterator;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class HabitualActivity extends AppCompatActivity {
 
@@ -150,7 +154,7 @@ public class HabitualActivity extends AppCompatActivity {
         // Create a ContentValues object where column names are the keys,
         // and Toto's pet attributes are the values.
         ContentValues values = new ContentValues();
-        values.put(GuitarPractice.COLUMN_DATE, "22/06/2017");
+        values.put(GuitarPractice.COLUMN_DATE, dateGenerator());
         values.put(GuitarPractice.COLUMN_TIME, "12:30:26");
         values.put(GuitarPractice.COLUMN_DURATION, 60);
         values.put(GuitarPractice.COLUMN_PRACTICE_TYPE, "Scales");
@@ -256,7 +260,12 @@ public class HabitualActivity extends AppCompatActivity {
         }
     }
 
-    private String dateGenerator(String date) {
+    private String dateGenerator() {
+        Calendar cal = Calendar.getInstance();
+        DateFormat df = new SimpleDateFormat("dd-mm-yyyy hh:mm:ss");
+        String date = df.format(cal.getTime());
+/*        BreakIterator txtDateView = null;
+        txtDateView.setText(date_str);*/
         return date;
     }
 
