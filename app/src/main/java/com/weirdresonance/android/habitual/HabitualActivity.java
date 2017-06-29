@@ -132,6 +132,8 @@ public class HabitualActivity extends AppCompatActivity {
      */
     private void insertPractice() {
 
+        //
+
         // Get the database in write mode
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
