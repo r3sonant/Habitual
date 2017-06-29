@@ -18,12 +18,22 @@ import java.security.PublicKey;
 
 public class HabitualActivity extends AppCompatActivity {
 
+    /** Database helper that will provide us access to the database */
     private PracticeDbHelper mDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_habitual);
+
+        mDbHelper = new PracticeDbHelper(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        insertPractice();
+        displayDatabaseInfo();
     }
 
     // Empty constructor so this class can't be instantiated.
@@ -114,7 +124,7 @@ public class HabitualActivity extends AppCompatActivity {
                     + GuitarPractice.COLUMN_DATE + " TEXT NOT NULL, "
                     + GuitarPractice.COLUMN_TIME + " TEXT NOT NULL, "
                     + GuitarPractice.COLUMN_DURATION + " INTEGER NOT NULL, "
-                    + GuitarPractice.COLUMN_PRACTICE_TYPE + " TEXT NOT NULL"
+                    + GuitarPractice.COLUMN_PRACTICE_TYPE + " TEXT NOT NULL, "
                     + GuitarPractice.COLUMN_PRACTICE_RATING + " INTEGER NOT NULL DEFAULT 0);";
 
             // Now execute the SQL statement.
@@ -140,10 +150,11 @@ public class HabitualActivity extends AppCompatActivity {
         // Create a ContentValues object where column names are the keys,
         // and Toto's pet attributes are the values.
         ContentValues values = new ContentValues();
-        values.put(PetEntry.COLUMN_PET_NAME, "Toto");
-        values.put(PetEntry.COLUMN_PET_BREED, "Terrier");
-        values.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
-        values.put(PetEntry.COLUMN_PET_WEIGHT, 7);
+        values.put(GuitarPractice.COLUMN_DATE, "22/06/2017");
+        values.put(GuitarPractice.COLUMN_TIME, "12:30:26");
+        values.put(GuitarPractice.COLUMN_DURATION, 60);
+        values.put(GuitarPractice.COLUMN_PRACTICE_TYPE, "Scales");
+        values.put(GuitarPractice.COLUMN_PRACTICE_RATING, 5);
 
         // Insert a new row for Toto in the database, returning the ID of that new row.
         // The first argument for db.insert() is the pets table name.
@@ -152,30 +163,7 @@ public class HabitualActivity extends AppCompatActivity {
         // this is set to "null", then the framework will not insert a row when
         // there are no values).
         // The third argument is the ContentValues object containing the info for Toto.
-        long newRowId = db.insert(PetEntry.TABLE_NAME, null, values);
-
-        // Read from input fields
-        // Use trim to eliminate leading or trailing white space
-        String nameString = mNameEditText.getText().toString().trim();
-        String breedString = mBreedEditText.getText().toString().trim();
-        String weightString = mWeightEditText.getText().toString().trim();
-        int weight = Integer.parseInt(weightString);
-        // Create database helper
-        PetDbHelper mDbHelper = new PetDbHelper(this);
-
-        // Gets the database in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-        // Create a ContentValues object where column names are the keys,
-        // and pet attributes from the editor are the values.
-        ContentValues values = new ContentValues();
-        values.put(PetEntry.COLUMN_PET_NAME, nameString);
-        values.put(PetEntry.COLUMN_PET_BREED, breedString);
-        values.put(PetEntry.COLUMN_PET_GENDER, mGender);
-        values.put(PetEntry.COLUMN_PET_WEIGHT, weight);
-
-        // Insert a new row for pet in the database, returning the ID of that new row.
-        long newRowId = db.insert(PetEntry.TABLE_NAME, null, values);
+        long newRowId = db.insert(GuitarPractice.TABLE_NAME, null, values);
 
         // Show a toast message depending on whether or not the insertion was successful
         if (newRowId == -1) {
@@ -198,15 +186,16 @@ public class HabitualActivity extends AppCompatActivity {
         // Define a projection that specifies which columns from the database
         // you will actually use after this query.
         String[] projection = {
-                PetEntry._ID,
-                PetEntry.COLUMN_PET_NAME,
-                PetEntry.COLUMN_PET_BREED,
-                PetEntry.COLUMN_PET_GENDER,
-                PetEntry.COLUMN_PET_WEIGHT };
+                GuitarPractice._ID,
+                GuitarPractice.COLUMN_DATE,
+                GuitarPractice.COLUMN_TIME,
+                GuitarPractice.COLUMN_DURATION,
+                GuitarPractice.COLUMN_PRACTICE_TYPE,
+                GuitarPractice.COLUMN_PRACTICE_RATING };
 
         // Perform a query on the pets table
         Cursor cursor = db.query(
-                PetEntry.TABLE_NAME,   // The table to query
+                GuitarPractice.TABLE_NAME,   // The table to query
                 projection,            // The columns to return
                 null,                  // The columns for the WHERE clause
                 null,                  // The values for the WHERE clause
@@ -214,7 +203,7 @@ public class HabitualActivity extends AppCompatActivity {
                 null,                  // Don't filter by row groups
                 null);                   // The sort order
 
-        TextView displayView = (TextView) findViewById(R.id.text_view_pet);
+        TextView displayView = (TextView) findViewById(R.id.dbData);
 
         try {
             // Create a header in the Text View that looks like this:
@@ -224,40 +213,66 @@ public class HabitualActivity extends AppCompatActivity {
             //
             // In the while loop below, iterate through the rows of the cursor and display
             // the information from each column in this order.
-            displayView.setText("The pets table contains " + cursor.getCount() + " pets.\n\n");
-            displayView.append(PetEntry._ID + " - " +
-                    PetEntry.COLUMN_PET_NAME + " - " +
-                    PetEntry.COLUMN_PET_BREED + " - " +
-                    PetEntry.COLUMN_PET_GENDER + " - " +
-                    PetEntry.COLUMN_PET_WEIGHT + "\n");
+            displayView.setText("The Guitar Practice Table Contains the following entries " + cursor.getCount() + "\n\n");
+            displayView.append(GuitarPractice._ID + " - " +
+                    GuitarPractice.COLUMN_DATE + " - " +
+                    GuitarPractice.COLUMN_TIME + " - " +
+                    GuitarPractice.COLUMN_DURATION + " - " +
+                    GuitarPractice.COLUMN_TIME + " - " +
+                    GuitarPractice.COLUMN_PRACTICE_RATING + "\n");
 
             // Figure out the index of each column
-            int idColumnIndex = cursor.getColumnIndex(PetEntry._ID);
-            int nameColumnIndex = cursor.getColumnIndex(PetEntry.COLUMN_PET_NAME);
-            int breedColumnIndex = cursor.getColumnIndex(PetEntry.COLUMN_PET_BREED);
-            int genderColumnIndex = cursor.getColumnIndex(PetEntry.COLUMN_PET_GENDER);
-            int weightColumnIndex = cursor.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT);
+            int columnIndexId = cursor.getColumnIndex(GuitarPractice._ID);
+            int columnIndexDate = cursor.getColumnIndex(GuitarPractice.COLUMN_DATE);
+            int columnIndexTime = cursor.getColumnIndex(GuitarPractice.COLUMN_TIME);
+            int columnIndexDuration = cursor.getColumnIndex(GuitarPractice.COLUMN_DURATION);
+            int columnIndexType = cursor.getColumnIndex(GuitarPractice.COLUMN_PRACTICE_TYPE);
+            int columnIndexRating = cursor.getColumnIndex(GuitarPractice.COLUMN_PRACTICE_RATING);
 
             // Iterate through all the returned rows in the cursor
             while (cursor.moveToNext()) {
                 // Use that index to extract the String or Int value of the word
                 // at the current row the cursor is on.
-                int currentID = cursor.getInt(idColumnIndex);
-                String currentName = cursor.getString(nameColumnIndex);
-                String currentBreed = cursor.getString(breedColumnIndex);
-                int currentGender = cursor.getInt(genderColumnIndex);
-                int currentWeight = cursor.getInt(weightColumnIndex);
+                int currentID = cursor.getInt(columnIndexId);
+                String currentDate = cursor.getString(columnIndexDate);
+                String currentTime = cursor.getString(columnIndexTime);
+                int currentDuration = cursor.getInt(columnIndexDuration);
+                String currentType = cursor.getString(columnIndexType);
+                int currentRating = cursor.getInt(columnIndexRating);
+
+
                 // Display the values from each column of the current row in the cursor in the TextView
                 displayView.append(("\n" + currentID + " - " +
-                        currentName + " - " +
-                        currentBreed + " - " +
-                        currentGender + " - " +
-                        currentWeight));
+                        currentDate + " - " +
+                        currentTime + " - " +
+                        currentDuration + " - " +
+                        currentType + " - " +
+                        currentRating));
             }
         } finally {
             // Always close the cursor when you're done reading from it. This releases all its
             // resources and makes it invalid.
             cursor.close();
         }
+    }
+
+    private String dateGenerator(String date) {
+        return date;
+    }
+
+    private String timeGenerator(String time) {
+        return time;
+    }
+
+    private int durationGenerator(int duration) {
+        return duration;
+    }
+
+    private String typeGenerator(String type) {
+        return type;
+    }
+
+    private int ratingGenerator(int rating) {
+        return rating;
     }
 }
