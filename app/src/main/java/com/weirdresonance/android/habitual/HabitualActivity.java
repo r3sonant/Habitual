@@ -8,22 +8,25 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.weirdresonance.android.habitual.HabitualActivity.HabitualContract;
 import com.weirdresonance.android.habitual.HabitualActivity.HabitualContract.GuitarPractice;
 
-import java.security.PublicKey;
-import java.text.BreakIterator;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Random;
 
 public class HabitualActivity extends AppCompatActivity {
 
-    /** Database helper that will provide us access to the database */
+    /**
+     * Database helper that will provide access to the database
+     */
     private PracticeDbHelper mDbHelper;
+    private Date timeNow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +43,179 @@ public class HabitualActivity extends AppCompatActivity {
         displayDatabaseInfo();
     }
 
+    protected void onClick(View v) {
+        insertPractice();
+        displayDatabaseInfo();
+    }
+
+    /**
+     * Insert dummy practice data into the database
+     */
+    private void insertPractice() {
+
+        //
+
+        // Get the database in write mode
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        // Create and object, ContentValues, with the column names as keys.
+        // Random generators are called to generate all the values.
+        ContentValues values = new ContentValues();
+        values.put(GuitarPractice.COLUMN_DATE, dateGenerator());
+        values.put(GuitarPractice.COLUMN_TIME, timeGenerator());
+        values.put(GuitarPractice.COLUMN_DURATION, durationGenerator());
+        values.put(GuitarPractice.COLUMN_PRACTICE_TYPE, typeGenerator());
+        values.put(GuitarPractice.COLUMN_PRACTICE_RATING, ratingGenerator());
+
+        // Insert a new row using the random values assigned above and insert them in the database
+        // and return the ID of the row.
+        long newRowId = db.insert(GuitarPractice.TABLE_NAME, null, values);
+
+        // Show a toast message stating if the add was successful or not.
+        if (newRowId == -1) {
+            // Check to see if the row ID was -1, if it was then there was an error inserting the row.
+            Toast.makeText(this, R.string.error_saving, Toast.LENGTH_SHORT).show();
+        } else {
+            // If the row ID was not -1 then the insert was successful.
+            Toast.makeText(this, getString(R.string.saved_successfully) + newRowId, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Temp helper method to show records that have been successfully added to the database
+     */
+    private void displayDatabaseInfo() {
+        // Create and/or open a database to read from it
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        // Define the projection by adding the columns that will be used from the table.
+        String[] projection = {
+                GuitarPractice._ID,
+                GuitarPractice.COLUMN_DATE,
+                GuitarPractice.COLUMN_TIME,
+                GuitarPractice.COLUMN_DURATION,
+                GuitarPractice.COLUMN_PRACTICE_TYPE,
+                GuitarPractice.COLUMN_PRACTICE_RATING};
+
+        // Query the practice table using the projection passing the table to query,
+        // the columns to return (now in the projections String array, null for the columns WHERE clause,
+        // null for values WHERE clause, null for grouping the rows, null for filtering the rows by groups
+        // and null for the sort order.
+        Cursor cursor = db.query(
+                GuitarPractice.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                null);
+
+        // Get the TextView to display the returned table data and set it to displayView.
+        TextView displayView = (TextView) findViewById(R.id.dbData);
+
+        try {
+            // Add a header to the TextView by concatenating all the column headers then iterate through all
+            // the rows and display them in the TextView
+            displayView.setText(getString(R.string.guitar_table_contains) + " " + cursor.getCount() + " " + getString(R.string.entries) + "\n\n");
+            displayView.append(GuitarPractice._ID + " - " +
+                    GuitarPractice.COLUMN_DATE + " - " +
+                    GuitarPractice.COLUMN_TIME + " - " +
+                    GuitarPractice.COLUMN_DURATION + " - " +
+                    GuitarPractice.COLUMN_TIME + " - " +
+                    GuitarPractice.COLUMN_PRACTICE_RATING + "\n");
+
+            // Get the index for each column using the cursor
+            int columnIndexId = cursor.getColumnIndex(GuitarPractice._ID);
+            int columnIndexDate = cursor.getColumnIndex(GuitarPractice.COLUMN_DATE);
+            int columnIndexTime = cursor.getColumnIndex(GuitarPractice.COLUMN_TIME);
+            int columnIndexDuration = cursor.getColumnIndex(GuitarPractice.COLUMN_DURATION);
+            int columnIndexType = cursor.getColumnIndex(GuitarPractice.COLUMN_PRACTICE_TYPE);
+            int columnIndexRating = cursor.getColumnIndex(GuitarPractice.COLUMN_PRACTICE_RATING);
+
+            // Iterate through all rows in the cursor
+            while (cursor.moveToNext()) {
+                // Using the index get the value of the item in that location and get the String for it.
+                int currentID = cursor.getInt(columnIndexId);
+                String currentDate = cursor.getString(columnIndexDate);
+                String currentTime = cursor.getString(columnIndexTime);
+                int currentDuration = cursor.getInt(columnIndexDuration);
+                String currentType = cursor.getString(columnIndexType);
+                int currentRating = cursor.getInt(columnIndexRating);
+
+                // Display all the returned values in the TextView.
+                displayView.append(("\n" + currentID + " - " +
+                        currentDate + " - " +
+                        currentTime + " - " +
+                        currentDuration + " - " +
+                        currentType + " - " +
+                        currentRating));
+            }
+        } finally {
+            // Close the cursor to release resources.
+            cursor.close();
+        }
+    }
+
+    /**
+     * Helper methods to generate random dummy data so each row is different.
+     */
+    // Gets the date the entry was created.
+    private String dateGenerator() {
+        Calendar calendar = Calendar.getInstance();
+        timeNow = calendar.getTime();
+        DateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
+        String date = dateFormat.format(timeNow);
+        return date;
+    }
+
+    // Gets the time the entry was created.
+    private String timeGenerator() {
+
+        DateFormat dateFormat = new SimpleDateFormat("hh:mm:ss");
+        String time = dateFormat.format(timeNow);
+        return time;
+    }
+
+    // Generate a random duration from 5 to 240 minutes.
+    private int durationGenerator() {
+        Random random = new Random();
+        int duration = random.nextInt(240 - 5) + 5;
+        return duration;
+    }
+
+    // Generate a random number from 1 to 5 inclusive then using a Switch statement
+    // reference that value to assign a practice type.
+    private String typeGenerator() {
+        String type = "";
+        Random random = new Random();
+        int rndNum = random.nextInt(5 - 1) + 1;
+        switch (rndNum) {
+            case 1:
+                type = getString(R.string.scales);
+                break;
+            case 2:
+                type = getString(R.string.chords);
+                break;
+            case 3:
+                type = getString(R.string.song);
+                break;
+            case 4:
+                type = getString(R.string.picking);
+                break;
+            case 5:
+                type = getString(R.string.hammer_ons_offs);
+                break;
+        }
+        return type;
+    }
+
+    // Generate a random number from 1 to 5 to be used for the rating column.
+    private int ratingGenerator() {
+        Random random = new Random();
+        int rating = random.nextInt(5 - 1) + 1;
+        return rating;
+    }
+
     // Empty constructor so this class can't be instantiated.
     public final class HabitualContract {
 
@@ -48,63 +224,61 @@ public class HabitualActivity extends AppCompatActivity {
          */
         public final class GuitarPractice implements BaseColumns {
 
-            /** Unique ID number for the practice instance row. */
+            /**
+             * Unique ID number for the practice instance row.
+             */
             public final static String _ID = BaseColumns._ID;
 
-            /** Name of the database table for guitar practice */
+            /**
+             * Name of the database table for guitar practice
+             */
             public static final String TABLE_NAME = "practic";
 
-            /** Date of the practice.
-             *
+            /**
+             * Date of the practice.
+             * <p>
              * Type: DATE
              */
-            public static final String COLUMN_DATE= "date";
+            public static final String COLUMN_DATE = "date";
 
             /**
              * Time of the practice.
-             *
+             * <p>
              * Type: TIME
              */
             public static final String COLUMN_TIME = "time";
 
             /**
              * Duration of the practice.
-             *
+             * <p>
              * Type: Integer (minutes)
              */
             public static final String COLUMN_DURATION = "duration";
 
             /**
              * Type of practice (Scales, songs, picking, strumming etc).
-             *
+             * <p>
              * Type: TEXT
              */
             public static final String COLUMN_PRACTICE_TYPE = "type";
 
             /**
              * Rating for the practice. How did it go?
-             *
+             * <p>
              * Type: INTEGER
              */
             public static final String COLUMN_PRACTICE_RATING = "rating";
-
-            /**
-             * Possible values for practice rating.
-             */
-            public static final int RATING_ZERO = 0;
-            public static final int RATING_ONE = 1;
-            public static final int RATING_TWO = 2;
-            public static final int RATING_THREE = 3;
-            public static final int RATING_FOUR = 4;
-            public static final int RATING_FIVE = 5;
         }
     }
 
+    /**
+     * DB Helper class
+     */
     public class PracticeDbHelper extends SQLiteOpenHelper {
 
-        public final String LOG_TAG = PracticeDbHelper.class.getSimpleName();
-
-        /** Name for the new database file */
+        /**
+         * Name for the new database file
+         */
         private static final String DATABASE_NAME = "practice.db";
 
         /**
@@ -118,12 +292,13 @@ public class HabitualActivity extends AppCompatActivity {
 
         /**
          * This will be called when the database is initially created.
+         *
          * @param db
          */
         @Override
         public void onCreate(SQLiteDatabase db) {
             // Concatenate the contract static Strings and DB parameters into the SQL statement that will create the practice table.
-            String SQL_CREATE_PRACTICE_TABLE = "CREATE TABLE "  + GuitarPractice.TABLE_NAME + " ("
+            String SQL_CREATE_PRACTICE_TABLE = "CREATE TABLE " + GuitarPractice.TABLE_NAME + " ("
                     + GuitarPractice._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + GuitarPractice.COLUMN_DATE + " TEXT NOT NULL, "
                     + GuitarPractice.COLUMN_TIME + " TEXT NOT NULL, "
@@ -131,7 +306,7 @@ public class HabitualActivity extends AppCompatActivity {
                     + GuitarPractice.COLUMN_PRACTICE_TYPE + " TEXT NOT NULL, "
                     + GuitarPractice.COLUMN_PRACTICE_RATING + " INTEGER NOT NULL DEFAULT 0);";
 
-            // Now execute the SQL statement.
+            // Execute the SQL statement.
             db.execSQL(SQL_CREATE_PRACTICE_TABLE);
         }
 
@@ -139,149 +314,5 @@ public class HabitualActivity extends AppCompatActivity {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // The database is still at version 1, so there's nothing to do be done here.
         }
-    }
-
-    /**
-     * Insert dummy practice data into the database
-     */
-    private void insertPractice() {
-
-        //
-
-        // Get the database in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-        // Create a ContentValues object where column names are the keys,
-        // and Toto's pet attributes are the values.
-        ContentValues values = new ContentValues();
-        values.put(GuitarPractice.COLUMN_DATE, dateGenerator());
-        values.put(GuitarPractice.COLUMN_TIME, "12:30:26");
-        values.put(GuitarPractice.COLUMN_DURATION, 60);
-        values.put(GuitarPractice.COLUMN_PRACTICE_TYPE, "Scales");
-        values.put(GuitarPractice.COLUMN_PRACTICE_RATING, 5);
-
-        // Insert a new row for Toto in the database, returning the ID of that new row.
-        // The first argument for db.insert() is the pets table name.
-        // The second argument provides the name of a column in which the framework
-        // can insert NULL in the event that the ContentValues is empty (if
-        // this is set to "null", then the framework will not insert a row when
-        // there are no values).
-        // The third argument is the ContentValues object containing the info for Toto.
-        long newRowId = db.insert(GuitarPractice.TABLE_NAME, null, values);
-
-        // Show a toast message depending on whether or not the insertion was successful
-        if (newRowId == -1) {
-            // If the row ID is -1, then there was an error with insertion.
-            Toast.makeText(this, "Error with saving pet", Toast.LENGTH_SHORT).show();
-        } else {
-            // Otherwise, the insertion was successful and we can display a toast with the row ID.
-            Toast.makeText(this, "Pet saved with row id: " + newRowId, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Temporary helper method to display information in the onscreen TextView about the state of
-     * the pets database.
-     */
-    private void displayDatabaseInfo() {
-        // Create and/or open a database to read from it
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-        // Define a projection that specifies which columns from the database
-        // you will actually use after this query.
-        String[] projection = {
-                GuitarPractice._ID,
-                GuitarPractice.COLUMN_DATE,
-                GuitarPractice.COLUMN_TIME,
-                GuitarPractice.COLUMN_DURATION,
-                GuitarPractice.COLUMN_PRACTICE_TYPE,
-                GuitarPractice.COLUMN_PRACTICE_RATING };
-
-        // Perform a query on the pets table
-        Cursor cursor = db.query(
-                GuitarPractice.TABLE_NAME,   // The table to query
-                projection,            // The columns to return
-                null,                  // The columns for the WHERE clause
-                null,                  // The values for the WHERE clause
-                null,                  // Don't group the rows
-                null,                  // Don't filter by row groups
-                null);                   // The sort order
-
-        TextView displayView = (TextView) findViewById(R.id.dbData);
-
-        try {
-            // Create a header in the Text View that looks like this:
-            //
-            // The pets table contains <number of rows in Cursor> pets.
-            // _id - name - breed - gender - weight
-            //
-            // In the while loop below, iterate through the rows of the cursor and display
-            // the information from each column in this order.
-            displayView.setText("The Guitar Practice Table Contains the following entries " + cursor.getCount() + "\n\n");
-            displayView.append(GuitarPractice._ID + " - " +
-                    GuitarPractice.COLUMN_DATE + " - " +
-                    GuitarPractice.COLUMN_TIME + " - " +
-                    GuitarPractice.COLUMN_DURATION + " - " +
-                    GuitarPractice.COLUMN_TIME + " - " +
-                    GuitarPractice.COLUMN_PRACTICE_RATING + "\n");
-
-            // Figure out the index of each column
-            int columnIndexId = cursor.getColumnIndex(GuitarPractice._ID);
-            int columnIndexDate = cursor.getColumnIndex(GuitarPractice.COLUMN_DATE);
-            int columnIndexTime = cursor.getColumnIndex(GuitarPractice.COLUMN_TIME);
-            int columnIndexDuration = cursor.getColumnIndex(GuitarPractice.COLUMN_DURATION);
-            int columnIndexType = cursor.getColumnIndex(GuitarPractice.COLUMN_PRACTICE_TYPE);
-            int columnIndexRating = cursor.getColumnIndex(GuitarPractice.COLUMN_PRACTICE_RATING);
-
-            // Iterate through all the returned rows in the cursor
-            while (cursor.moveToNext()) {
-                // Use that index to extract the String or Int value of the word
-                // at the current row the cursor is on.
-                int currentID = cursor.getInt(columnIndexId);
-                String currentDate = cursor.getString(columnIndexDate);
-                String currentTime = cursor.getString(columnIndexTime);
-                int currentDuration = cursor.getInt(columnIndexDuration);
-                String currentType = cursor.getString(columnIndexType);
-                int currentRating = cursor.getInt(columnIndexRating);
-
-
-                // Display the values from each column of the current row in the cursor in the TextView
-                displayView.append(("\n" + currentID + " - " +
-                        currentDate + " - " +
-                        currentTime + " - " +
-                        currentDuration + " - " +
-                        currentType + " - " +
-                        currentRating));
-            }
-        } finally {
-            // Always close the cursor when you're done reading from it. This releases all its
-            // resources and makes it invalid.
-            cursor.close();
-        }
-    }
-
-    private String dateGenerator() {
-        Calendar cal = Calendar.getInstance();
-        DateFormat df = new SimpleDateFormat("dd-mm-yyyy hh:mm:ss");
-        String date = df.format(cal.getTime());
-/*        BreakIterator txtDateView = null;
-        txtDateView.setText(date_str);*/
-        return date;
-    }
-
-    private String timeGenerator(String time) {
-        return time;
-    }
-
-    private int durationGenerator(int duration) {
-        return duration;
-    }
-
-    private String typeGenerator(String type) {
-        return type;
-    }
-
-    private int ratingGenerator(int rating) {
-        return rating;
     }
 }

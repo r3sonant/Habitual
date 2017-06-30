@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Habitual</string>
+    <string name="error_saving">There was an error saving the data</string>
+    <string name="saved_successfully">The practice row was saved with the id:</string>
+    <string name="guitar_table_contains">The Guitar Practice Table Contains the following </string>
+    <string name="scales">Scales</string>
+    <string name="chords">Chords</string>
+    <string name="song">Song</string>
+    <string name="picking">Picking</string>
+    <string name="hammer_ons_offs">Hammer ons / offs</string>
+    <string name="entries">entries.</string>
+    <string name="add_dummy_data">Add Dummy Data</string>
 </resources>
