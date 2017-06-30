@@ -52,9 +52,7 @@ public class HabitualActivity extends AppCompatActivity {
      * Insert dummy practice data into the database
      */
     private void insertPractice() {
-
-        //
-
+        
         // Get the database in write mode
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
