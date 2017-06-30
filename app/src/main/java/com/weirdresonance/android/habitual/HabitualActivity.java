@@ -36,13 +36,6 @@ public class HabitualActivity extends AppCompatActivity {
         mDbHelper = new PracticeDbHelper(this);
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        insertPractice();
-        displayDatabaseInfo();
-    }
-
     protected void onClick(View v) {
         insertPractice();
         displayDatabaseInfo();
